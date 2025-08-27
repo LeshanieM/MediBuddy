@@ -1,3 +1,5 @@
+import utils.transport
+import utils.session
 from flask import Flask, render_template, request, jsonify
 from src.helper import download_hugging_face_embeddings
 from langchain_pinecone import PineconeVectorStore
