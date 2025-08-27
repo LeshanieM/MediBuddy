@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Medibuddy Chatbot</title>
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway|Ubuntu&display=swap" rel="stylesheet">
+
+  <!-- FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+
+  <style>
+    body {
+      font-family: 'Ubuntu', sans-serif;
+      background: #f8f9fa;
+    }
+
+    /* Floating Chat Button */
+    .chat-button {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 60px;
+      height: 60px;
+      background: #3498db; /* light blue */
+      color: #fff;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      z-index: 999;
+    }
+    .chat-button i {
+      font-size: 24px;
+    }
+
+    /* Chat Box */
+    .chat-box {
+      position: fixed;
+      bottom: 90px;
+      right: 20px;
+      width: 350px;
+      max-height: 500px;
+      display: none;
+      flex-direction: column;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+      background: #fff;
+      z-index: 1000;
+    }
+    .chat-box.fullscreen {
+      width: 100%;
+      height: 100%;
+      bottom: 0;
+      right: 0;
+      border-radius: 0;
+      max-height: 100%;
+    }
+
+    /* Header */
+    .chat-box-header {
+      background: #3498db; /* light blue */
+      color: #fff;
+      padding: 12px 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .chat-box-header h3 {
+      margin: 0;
+      font-size: 18px;
+    }
+    .chat-box-header i {
+      cursor: pointer;
+    }
+
+    /* Body */
+    .chat-box-body {
+      flex: 1;
+      padding: 15px;
+      overflow-y: auto;
+      background: #f1f5f9;
+    }
+    .chat-message {
+      margin-bottom: 12px;
+      max-width: 80%;
+      padding: 10px 14px;
+      border-radius: 16px;
+      position: relative;
+      word-wrap: break-word;
+    }
+    .chat-message.send {
+      background: #3498db; /* light blue */
+      color: #fff;
+      margin-left: auto;
+      border-bottom-right-radius: 4px;
+    }
+    .chat-message.receive {
+      background: #e9ecef;
+      color: #000;
+      margin-right: auto;
+      border-bottom-left-radius: 4px;
+    }
+    .chat-message span {
+      display: block;
+      font-size: 11px;
+      opacity: 0.7;
+      margin-top: 4px;
+    }
+
+    /* Footer */
+    .chat-box-footer {
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      background: #fff;
+      border-top: 1px solid #ddd;
+    }
+    .chat-box-footer input {
+      flex: 1;
+      border: none;
+      outline: none;
+      padding: 10px;
+    }
+    .chat-box-footer .send {
+      color: #3498db;
+      cursor: pointer;
+      font-size: 20px;
+      margin-left: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Floating Chat Button -->
+  <div class="chat-button">
+    <i class="fas fa-comments"></i>
+  </div>
+
+  <!-- Chat Box -->
+  <div class="chat-box">
+    <!-- Header -->
+    <div class="chat-box-header">
+      <h3>Medibuddy</h3>
+      <div>
+        <i class="fas fa-expand fullscreen-toggle me-3"></i>
+        <i class="fa fa-times close-chat"></i>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div class="chat-box-body" id="chatBody"></div>
+
+    <!-- Footer -->
+    <div class="chat-box-footer">
+      <input type="text" placeholder="Type your message..." />
+      <i class="send far fa-paper-plane"></i>
+    </div>
+  </div>
+
+  <script>
+    const chatBox = document.querySelector('.chat-box');
+    const chatBtn = document.querySelector('.chat-button');
+    const closeChat = document.querySelector('.close-chat');
+    const sendIcon = document.querySelector('.chat-box-footer .send');
+    const inputBox = document.querySelector('.chat-box-footer input');
+    const chatBody = document.querySelector('.chat-box-body');
+    const fullscreenToggle = document.querySelector('.fullscreen-toggle');
+    let welcomeShown = false;
+
+    // Toggle chat visibility
+    chatBtn.addEventListener('click', () => {
+      chatBox.style.display = 'flex';
+      if (!welcomeShown) {
+        showWelcomeMessage();
+        welcomeShown = true;
+      }
+    });
+    closeChat.addEventListener('click', () => chatBox.style.display = 'none');
+
+    // Toggle fullscreen
+    fullscreenToggle.addEventListener('click', () => {
+      chatBox.classList.toggle('fullscreen');
+      fullscreenToggle.classList.toggle('fa-expand');
+      fullscreenToggle.classList.toggle('fa-compress');
+    });
+
+    // Welcome message
+    function showWelcomeMessage() {
+      const botDiv = document.createElement('div');
+      botDiv.classList.add('chat-message', 'receive');
+      botDiv.innerHTML = `<p>👋 Hi! Welcome to Medibuddy. How can I help you today?</p>
+                          <span>${new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>`;
+      chatBody.appendChild(botDiv);
+      chatBody.scrollTop = chatBody.scrollHeight;
+    }
+
+    // Function to send message
+    function sendMessage() {
+      const text = inputBox.value.trim();
+      if (text) {
+        const userDiv = document.createElement('div');
+        userDiv.classList.add('chat-message', 'send');
+        userDiv.innerHTML = `<p>${text}</p><span>${new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>`;
+        chatBody.appendChild(userDiv);
+        chatBody.scrollTop = chatBody.scrollHeight;
+        inputBox.value = '';
+
+        // AJAX call to Flask backend
+        fetch("/get", {
+          method: "POST",
+          headers: {"Content-Type": "application/x-www-form-urlencoded"},
+          body: "msg=" + encodeURIComponent(text)
+        })
+        .then(response => response.text())
+        .then(data => {
+          const botDiv = document.createElement('div');
+          botDiv.classList.add('chat-message', 'receive');
+          botDiv.innerHTML = `<p>${data}</p><span>${new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>`;
+          chatBody.appendChild(botDiv);
+          chatBody.scrollTop = chatBody.scrollHeight;
+        })
+        .catch(err => {
+          const errorDiv = document.createElement('div');
+          errorDiv.classList.add('chat-message', 'receive');
+          errorDiv.innerHTML = `<p style="color:red;">Error connecting to server.</p>`;
+          chatBody.appendChild(errorDiv);
+        });
+      }
+    }
+
+    // Send on click
+    sendIcon.addEventListener('click', sendMessage);
+
+    // Send on Enter key
+    inputBox.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+  </script>
+</body>
+</html>
